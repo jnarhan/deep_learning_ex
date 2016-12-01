@@ -18,6 +18,7 @@ from matplotlib import pyplot as plt
 from keras.utils import np_utils
 import keras.callbacks as cb
 from keras.models import Sequential
+from keras.layers import Input
 from keras.layers.convolutional import Convolution2D, MaxPooling2D
 from keras.layers.core import Dense, Dropout, Activation, Flatten
 from keras.optimizers import RMSprop
@@ -83,27 +84,30 @@ def init_model():
 
 
 def init_model_1():
+    """
+    Uses functional API to construct model.
+    https://keras.io/models/model/
+    """
     start_time = time.time()
     print 'Compiling model...'
-    model = Sequential()
-    model.add(Convolution2D(64, 3,3, border_mode='valid',input_shape=INPUT_SHAPE))
-    model.add(Activation('relu'))
+    layers = [
+      Convolution2D(64, 3,3, border_mode='valid')
+      Activation('relu'),
+      Convolution2D(64, 3,3, border_mode='valid'),
+      Activation('relu'),
+      MaxPooling2D(pool_size=(2,2)),
+      Dropout(.25),
+      Flatten(),
+      Dense(128),
+      Activation('relu'),
+      Dropout(.5),
+      Dense(10),
+      Activation('softmax')
+    ]
 
-    model.add(Convolution2D(64, 3,3, border_mode='valid'))
-    model.add(Activation('relu'))
-
-    model.add(MaxPooling2D(pool_size=(2,2)))
-    model.add(Dropout(.25))
-
-    model.add(Flatten())
-
-    model.add(Dense(128))
-    model.add(Activation('relu'))
-    model.add(Dropout(.5))
-
-    model.add(Dense(10))
-    model.add(Activation('softmax'))
-
+    ilayer = Input(shape=INPUT_SHAPE),
+    olayer = reduce(lambda a,l: l(a), layers, ilayer)
+    model = Model(ilayer, olayer)
     rms = RMSprop()
     model.compile(loss='categorical_crossentropy', optimizer=rms,
       metrics=['accuracy'])
